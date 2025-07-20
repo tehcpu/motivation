@@ -11,6 +11,10 @@ var App = function($el){
     'submit', this.submit.bind(this)
   );
 
+  // Лог для отладки
+  console.log('Handlebars loaded:', typeof Handlebars === 'object');
+  console.log('Templates available:', Handlebars.templates);
+
   if (this.dob) {
     this.renderAgeLoop();
   } else {
@@ -44,7 +48,13 @@ App.fn.submit = function(e){
 };
 
 App.fn.renderChoose = function(){
-  this.html(this.view('dob')());
+  var template = this.view('dob');
+  if (typeof template !== 'function') {
+    console.error('Error: dob template not loaded or not a function');
+    this.$el.innerHTML = '<p>Error loading template. Check console.</p>'; // Fallback
+    return;
+  }
+  this.html(template());
 };
 
 App.fn.renderAgeLoop = function(){
@@ -59,7 +69,12 @@ App.fn.renderAge = function(){
   var majorMinor = years.toFixed(9).toString().split('.');
 
   requestAnimationFrame(function(){
-    this.html(this.view('age')({
+    var template = this.view('age');
+    if (typeof template !== 'function') {
+      console.error('Error: age template not loaded or not a function');
+      return;
+    }
+    this.html(template({
       year:         majorMinor[0],
       milliseconds: majorMinor[1]
     }));
@@ -75,8 +90,9 @@ App.fn.html = function(html){
 };
 
 App.fn.view = function(name){
-  var $el = $(name + '-template');
-  return Handlebars.compile($el.innerHTML);
+  var tmpl = Handlebars.templates[name + '.hbs'];  // Добавили '.hbs' для совпадения с вашими ключами
+  console.log(`Fetching template ${name}:`, tmpl);
+  return tmpl;
 };
 
 window.app = new App($('app'))
